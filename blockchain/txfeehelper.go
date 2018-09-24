@@ -10,24 +10,21 @@ import (
 	. "github.com/elastos/Elastos.ELA.Utility/common"
 )
 
-var TxFeeHelper *TxFeeHelperBase
+var TxFeeHelper ITxFeeHelper
+
+type ITxFeeHelper interface {
+	GetTxFee(tx *core.Transaction, assetId Uint256) Fixed64
+	GetTxFeeMap(tx *core.Transaction) (map[Uint256]Fixed64, error)
+}
 
 type TxFeeHelperBase struct {
-	GetTxFee    func(tx *core.Transaction, assetId Uint256) Fixed64
-	GetTxFeeMap func(tx *core.Transaction) (map[Uint256]Fixed64, error)
 }
 
 func InitTxFeeHelper() {
 	TxFeeHelper = &TxFeeHelperBase{}
-	TxFeeHelper.Init()
 }
 
-func (t *TxFeeHelperBase) Init() {
-	t.GetTxFee = t.GetTxFeeImpl
-	t.GetTxFeeMap = t.GetTxFeeMapImpl
-}
-
-func (t *TxFeeHelperBase) GetTxFeeImpl(tx *core.Transaction, assetId Uint256) Fixed64 {
+func (t *TxFeeHelperBase) GetTxFee(tx *core.Transaction, assetId Uint256) Fixed64 {
 	feeMap, err := t.GetTxFeeMap(tx)
 	if err != nil {
 		return 0
@@ -36,7 +33,7 @@ func (t *TxFeeHelperBase) GetTxFeeImpl(tx *core.Transaction, assetId Uint256) Fi
 	return feeMap[assetId]
 }
 
-func (t *TxFeeHelperBase) GetTxFeeMapImpl(tx *core.Transaction) (map[Uint256]Fixed64, error) {
+func (t *TxFeeHelperBase) GetTxFeeMap(tx *core.Transaction) (map[Uint256]Fixed64, error) {
 	feeMap := make(map[Uint256]Fixed64)
 
 	if tx.IsRechargeToSideChainTx() {

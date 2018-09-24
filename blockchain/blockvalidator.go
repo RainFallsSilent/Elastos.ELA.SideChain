@@ -18,38 +18,21 @@ const (
 	MaxTimeOffsetSeconds = 2 * 60 * 60
 )
 
-var BlockValidator *BlockValidateBase
+var BlockValidator IBlockValidate
+
+type IBlockValidate interface {
+	PowCheckBlockSanity(block *Block, powLimit *big.Int, timeSource MedianTimeSource) error
+	PowCheckBlockContext(block *Block, prevNode *BlockNode, ledger *Ledger) error
+}
 
 type BlockValidateBase struct {
-	PowCheckBlockSanity        func(block *Block, powLimit *big.Int, timeSource MedianTimeSource) error
-	PowCheckHeader             func(block *Block, powLimit *big.Int, timeSource MedianTimeSource) error
-	PowCheckTransactionsCount  func(block *Block) error
-	PowCheckBlockSize          func(block *Block) error
-	PowCheckTransactionsFee    func(block *Block) error
-	PowCheckTransactionsMerkle func(block *Block) error
-	PowCheckBlockContext       func(block *Block, prevNode *BlockNode, ledger *Ledger) error
-	CheckProofOfWork           func(header *Header, powLimit *big.Int) error
-	IsFinalizedTransaction     func(msgTx *Transaction, blockHeight uint32) bool
 }
 
 func InitBlockValidator() {
 	BlockValidator = &BlockValidateBase{}
-	BlockValidator.Init()
 }
 
-func (v *BlockValidateBase) Init() {
-	v.PowCheckBlockSanity = v.PowCheckBlockSanityImpl
-	v.PowCheckHeader = v.PowCheckHeaderImpl
-	v.PowCheckTransactionsCount = v.PowCheckTransactionsCountImpl
-	v.PowCheckBlockSize = v.PowCheckBlockSizeImpl
-	v.PowCheckTransactionsFee = v.PowCheckTransactionsFeeImpl
-	v.PowCheckTransactionsMerkle = v.PowCheckTransactionsMerkleImpl
-	v.PowCheckBlockContext = v.PowCheckBlockContextImpl
-	v.CheckProofOfWork = v.CheckProofOfWorkImpl
-	v.IsFinalizedTransaction = v.IsFinalizedTransactionImpl
-}
-
-func (v *BlockValidateBase) PowCheckBlockSanityImpl(block *Block, powLimit *big.Int, timeSource MedianTimeSource) error {
+func (v *BlockValidateBase) PowCheckBlockSanity(block *Block, powLimit *big.Int, timeSource MedianTimeSource) error {
 
 	if err := v.PowCheckHeader(block, powLimit, timeSource); err != nil {
 		return errors.New("[PowCheckBlockSanity] error:" + err.Error())
@@ -73,7 +56,7 @@ func (v *BlockValidateBase) PowCheckBlockSanityImpl(block *Block, powLimit *big.
 	return nil
 }
 
-func (v *BlockValidateBase) PowCheckHeaderImpl(block *Block, powLimit *big.Int, timeSource MedianTimeSource) error {
+func (v *BlockValidateBase) PowCheckHeader(block *Block, powLimit *big.Int, timeSource MedianTimeSource) error {
 	header := block.Header
 
 	// A block's main chain block header must contain in spv module
@@ -104,7 +87,7 @@ func (v *BlockValidateBase) PowCheckHeaderImpl(block *Block, powLimit *big.Int, 
 	return nil
 }
 
-func (v *BlockValidateBase) PowCheckTransactionsCountImpl(block *Block) error {
+func (v *BlockValidateBase) PowCheckTransactionsCount(block *Block) error {
 	// A block must have at least one transaction.
 	numTx := len(block.Transactions)
 	if numTx == 0 {
@@ -119,7 +102,7 @@ func (v *BlockValidateBase) PowCheckTransactionsCountImpl(block *Block) error {
 	return nil
 }
 
-func (v *BlockValidateBase) PowCheckBlockSizeImpl(block *Block) error {
+func (v *BlockValidateBase) PowCheckBlockSize(block *Block) error {
 	// A block must not exceed the maximum allowed block payload when serialized.
 	blockSize := block.GetSize()
 	if blockSize > config.Parameters.MaxBlockSize {
@@ -129,7 +112,7 @@ func (v *BlockValidateBase) PowCheckBlockSizeImpl(block *Block) error {
 	return nil
 }
 
-func (v *BlockValidateBase) PowCheckTransactionsFeeImpl(block *Block) error {
+func (v *BlockValidateBase) PowCheckTransactionsFee(block *Block) error {
 	transactions := block.Transactions
 	var rewardInCoinbase = Fixed64(0)
 	var totalTxFee = Fixed64(0)
@@ -163,7 +146,7 @@ func (v *BlockValidateBase) PowCheckTransactionsFeeImpl(block *Block) error {
 	return nil
 }
 
-func (v *BlockValidateBase) PowCheckTransactionsMerkleImpl(block *Block) error {
+func (v *BlockValidateBase) PowCheckTransactionsMerkle(block *Block) error {
 	txIds := make([]Uint256, 0, len(block.Transactions))
 	existingTxIds := make(map[Uint256]struct{})
 	existingTxInputs := make(map[string]struct{})
@@ -217,7 +200,7 @@ func (v *BlockValidateBase) PowCheckTransactionsMerkleImpl(block *Block) error {
 	return nil
 }
 
-func (v *BlockValidateBase) PowCheckBlockContextImpl(block *Block, prevNode *BlockNode, ledger *Ledger) error {
+func (v *BlockValidateBase) PowCheckBlockContext(block *Block, prevNode *BlockNode, ledger *Ledger) error {
 	// The genesis block is valid by definition.
 	if prevNode == nil {
 		return nil
@@ -257,7 +240,7 @@ func (v *BlockValidateBase) PowCheckBlockContextImpl(block *Block, prevNode *Blo
 	return nil
 }
 
-func (v *BlockValidateBase) CheckProofOfWorkImpl(header *Header, powLimit *big.Int) error {
+func (v *BlockValidateBase) CheckProofOfWork(header *Header, powLimit *big.Int) error {
 	// The target difficulty must be larger than zero.
 	target := CompactToBig(header.Bits)
 	if target.Sign() <= 0 {
@@ -280,7 +263,7 @@ func (v *BlockValidateBase) CheckProofOfWorkImpl(header *Header, powLimit *big.I
 	return nil
 }
 
-func (v *BlockValidateBase) IsFinalizedTransactionImpl(msgTx *Transaction, blockHeight uint32) bool {
+func (v *BlockValidateBase) IsFinalizedTransaction(msgTx *Transaction, blockHeight uint32) bool {
 	// Lock time of zero means the transaction is finalized.
 	lockTime := msgTx.LockTime
 	if lockTime == 0 {

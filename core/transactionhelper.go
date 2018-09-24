@@ -5,24 +5,21 @@ import (
 	"github.com/elastos/Elastos.ELA.Utility/common"
 )
 
-var TransactionHelper *TransactionHelperBase
+var TransactionHelper ITransactionHelper
+
+type ITransactionHelper interface {
+	Name(txType TransactionType) string
+	GetDataContainer(programHash *common.Uint168, tx *Transaction) interfaces.IDataContainer
+}
 
 type TransactionHelperBase struct {
-	Name             func(txType TransactionType) string
-	GetDataContainer func(programHash *common.Uint168, tx *Transaction) interfaces.IDataContainer
 }
 
 func InitTransactionHelper() {
 	TransactionHelper = &TransactionHelperBase{}
-	TransactionHelper.Init()
 }
 
-func (t *TransactionHelperBase) Init() {
-	t.Name = t.IName
-	t.GetDataContainer = t.IGetDataContainer
-}
-
-func (t *TransactionHelperBase) IName(txType TransactionType) string {
+func (t *TransactionHelperBase) Name(txType TransactionType) string {
 	switch txType {
 	case CoinBase:
 		return "CoinBase"
@@ -47,6 +44,6 @@ func (t *TransactionHelperBase) IName(txType TransactionType) string {
 	}
 }
 
-func (t *TransactionHelperBase) IGetDataContainer(programHash *common.Uint168, tx *Transaction) interfaces.IDataContainer {
+func (t *TransactionHelperBase) GetDataContainer(programHash *common.Uint168, tx *Transaction) interfaces.IDataContainer {
 	return tx
 }

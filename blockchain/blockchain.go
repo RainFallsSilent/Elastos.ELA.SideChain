@@ -83,7 +83,7 @@ func Init(store IChainStore) error {
 	DefaultLedger.Blockchain = NewBlockchain(0)
 	DefaultLedger.Store = store
 	DefaultLedger.Blockchain.AssetID = genesisBlock.Transactions[0].Hash()
-	height, err := DefaultLedger.Store.InitWithGenesisBlock(genesisBlock)
+	height, err := InitWithGenesisBlock(DefaultLedger.Store.(*ChainStore), genesisBlock)
 	if err != nil {
 		return errors.New("[Blockchain], InitLevelDBStoreWithGenesisBlock failed, " + err.Error())
 	}

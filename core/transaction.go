@@ -163,7 +163,7 @@ func (tx *Transaction) DeserializeUnsigned(r io.Reader) error {
 		return err
 	}
 
-	tx.Payload, err = PayloadCreater.GetPayload(tx.TxType)
+	tx.Payload, err = PayloadHelper.GetPayload(tx.TxType)
 	if err != nil {
 		return err
 	}
@@ -277,7 +277,7 @@ func (tx *Transaction) GetData() []byte {
 }
 
 func init() {
-	InitPayloadCreater()
+	InitPayloadHelper()
 	InitTransactionHelper()
 	InitOutputHelper()
 }

@@ -48,22 +48,6 @@ type ChainStore struct {
 
 	currentBlockHeight uint32
 	storedHeaderCount  uint32
-
-	PersistTrimmedBlock  func(b *core.Block) error
-	RollbackTrimmedBlock func(b *core.Block) error
-	PersistBlockHash     func(b *core.Block) error
-	RollbackBlockHash    func(b *core.Block) error
-	PersistCurrentBlock  func(b *core.Block) error
-	RollbackCurrentBlock func(b *core.Block) error
-	PersistUnspendUTXOs  func(b *core.Block) error
-	RollbackUnspendUTXOs func(b *core.Block) error
-	PersistTransactions  func(b *core.Block) error
-	RollbackTransactions func(b *core.Block) error
-	RollbackTransaction  func(txn *core.Transaction) error
-	RollbackAsset        func(assetId Uint256) error
-	RollbackMainchainTx  func(mainchainTxHash Uint256) error
-	PersistUnspend       func(b *core.Block) error
-	RollbackUnspend      func(b *core.Block) error
 }
 
 func NewChainStore() (*ChainStore, error) {
@@ -83,30 +67,11 @@ func NewChainStore() (*ChainStore, error) {
 		taskCh:             make(chan persistTask, TaskChanCap),
 		quit:               make(chan chan bool, 1),
 	}
-	store.Init()
 	return store, nil
 }
 
 func StartChainStoreLoop(store *ChainStore) {
 	go store.Loop()
-}
-
-func (c *ChainStore) Init() {
-	c.PersistTrimmedBlock = c.PersistTrimmedBlockImpl
-	c.RollbackTrimmedBlock = c.RollbackTrimmedBlockImpl
-	c.PersistBlockHash = c.PersistBlockHashImpl
-	c.RollbackBlockHash = c.RollbackBlockHashImpl
-	c.PersistCurrentBlock = c.PersistCurrentBlockImpl
-	c.RollbackCurrentBlock = c.RollbackCurrentBlockImpl
-	c.PersistUnspendUTXOs = c.PersistUnspendUTXOsImpl
-	c.RollbackUnspendUTXOs = c.RollbackUnspendUTXOsImpl
-	c.PersistTransactions = c.PersistTransactionsImpl
-	c.RollbackTransactions = c.RollbackTransactionsImpl
-	c.RollbackTransaction = c.RollbackTransactionImpl
-	c.RollbackAsset = c.RollbackAssetImpl
-	c.RollbackMainchainTx = c.RollbackMainchainTxImpl
-	c.PersistUnspend = c.PersistUnspendImpl
-	c.RollbackUnspend = c.RollbackUnspendImpl
 }
 
 func (c *ChainStore) Close() {
@@ -142,21 +107,7 @@ func (c *ChainStore) Loop() {
 	}
 }
 
-// can only be invoked by backend write goroutine
-func (c *ChainStore) clearCache(b *core.Block) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	for e := c.headerIdx.Front(); e != nil; e = e.Next() {
-		n := e.Value.(core.Header)
-		h := n.Hash()
-		if h.IsEqual(b.Hash()) {
-			c.headerIdx.Remove(e)
-		}
-	}
-}
-
-func (c *ChainStore) InitWithGenesisBlock(genesisBlock *core.Block) (uint32, error) {
+func InitWithGenesisBlock(c *ChainStore, genesisBlock *core.Block) (uint32, error) {
 	prefix := []byte{byte(CFG_Version)}
 	version, err := c.Get(prefix)
 	if err != nil {
@@ -235,7 +186,20 @@ func (c *ChainStore) InitWithGenesisBlock(genesisBlock *core.Block) (uint32, err
 	}
 
 	return c.currentBlockHeight, nil
+}
 
+// can only be invoked by backend write goroutine
+func (c *ChainStore) clearCache(b *core.Block) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	for e := c.headerIdx.Front(); e != nil; e = e.Next() {
+		n := e.Value.(core.Header)
+		h := n.Hash()
+		if h.IsEqual(b.Hash()) {
+			c.headerIdx.Remove(e)
+		}
+	}
 }
 
 func (c *ChainStore) IsTxHashDuplicate(txhash Uint256) bool {

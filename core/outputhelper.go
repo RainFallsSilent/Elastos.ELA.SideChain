@@ -6,24 +6,21 @@ import (
 	. "github.com/elastos/Elastos.ELA.Utility/common"
 )
 
-var OutputHelper *OutputHelperBase
+var OutputHelper IOutputHelper
+
+type IOutputHelper interface {
+	Serialize(output *Output, w io.Writer) error
+	Deserialize(output *Output, r io.Reader) error
+}
 
 type OutputHelperBase struct {
-	Serialize   func(output *Output, w io.Writer) error
-	Deserialize func(output *Output, r io.Reader) error
 }
 
 func InitOutputHelper() {
 	OutputHelper = &OutputHelperBase{}
-	OutputHelper.Init()
 }
 
-func (h *OutputHelperBase) Init() {
-	h.Serialize = OutputHelper.SerializeImpl
-	h.Deserialize = OutputHelper.DeserializeImpl
-}
-
-func (h *OutputHelperBase) SerializeImpl(output *Output, w io.Writer) error {
+func (h *OutputHelperBase) Serialize(output *Output, w io.Writer) error {
 	err := output.AssetID.Serialize(w)
 	if err != nil {
 		return err
@@ -44,7 +41,7 @@ func (h *OutputHelperBase) SerializeImpl(output *Output, w io.Writer) error {
 	return nil
 }
 
-func (h *OutputHelperBase) DeserializeImpl(output *Output, r io.Reader) error {
+func (h *OutputHelperBase) Deserialize(output *Output, r io.Reader) error {
 	err := output.AssetID.Deserialize(r)
 	if err != nil {
 		return err

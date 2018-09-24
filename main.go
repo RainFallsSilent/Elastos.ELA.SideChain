@@ -64,12 +64,12 @@ func main() {
 	var noder protocol.Noder
 	log.Info("Node version: ", config.Version)
 
-	core.InitPayloadCreater()
+	core.InitPayloadHelper()
 	core.InitTransactionHelper()
 	core.InitOutputHelper()
 	blockchain.InitTxFeeHelper()
-	blockchain.InitBlockValidator()
 	blockchain.InitTransactionValidtor()
+	blockchain.InitBlockValidator()
 
 	log.Info("1. BlockChain init")
 	chainStore, err := blockchain.NewChainStore()

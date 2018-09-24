@@ -8,8 +8,6 @@ import (
 
 // IChainStore provides func with store package.
 type IChainStore interface {
-	InitWithGenesisBlock(genesisblock *core.Block) (uint32, error)
-
 	SaveBlock(b *core.Block) error
 	GetBlock(hash Uint256) (*core.Block, error)
 	GetBlockHash(height uint32) (Uint256, error)
@@ -38,6 +36,22 @@ type IChainStore interface {
 	GetUnspentFromProgramHash(programHash Uint168, assetid Uint256) ([]*UTXO, error)
 	GetUnspentsFromProgramHash(programHash Uint168) (map[Uint256][]*UTXO, error)
 	GetAssets() map[Uint256]*core.Asset
+
+	PersistTrimmedBlock(b *core.Block) error
+	RollbackTrimmedBlock(b *core.Block) error
+	PersistBlockHash(b *core.Block) error
+	RollbackBlockHash(b *core.Block) error
+	PersistCurrentBlock(b *core.Block) error
+	RollbackCurrentBlock(b *core.Block) error
+	PersistUnspendUTXOs(b *core.Block) error
+	RollbackUnspendUTXOs(b *core.Block) error
+	PersistTransactions(b *core.Block) error
+	RollbackTransactions(b *core.Block) error
+	RollbackTransaction(txn *core.Transaction) error
+	RollbackAsset(assetId Uint256) error
+	RollbackMainchainTx(mainchainTxHash Uint256) error
+	PersistUnspend(b *core.Block) error
+	RollbackUnspend(b *core.Block) error
 
 	IsTxHashDuplicate(txhash Uint256) bool
 	IsMainchainTxHashDuplicate(mainchainTxHash Uint256) bool

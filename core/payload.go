@@ -7,7 +7,7 @@ import (
 
 //Payload define the func for loading the payload data
 //base on payload type which have different struture
-var PayloadCreater *PayloadBase
+var PayloadHelper IPayload
 
 type Payload interface {
 	//  Get payload data
@@ -19,20 +19,18 @@ type Payload interface {
 	Deserialize(r io.Reader, version byte) error
 }
 
+type IPayload interface {
+	GetPayload(txType TransactionType) (Payload, error)
+}
+
 type PayloadBase struct {
-	GetPayload func(txType TransactionType) (Payload, error)
 }
 
-func InitPayloadCreater() {
-	PayloadCreater = &PayloadBase{}
-	PayloadCreater.Init()
+func InitPayloadHelper() {
+	PayloadHelper = &PayloadBase{}
 }
 
-func (pb *PayloadBase) Init() {
-	pb.GetPayload = pb.GetPayloadImpl
-}
-
-func (pb *PayloadBase) GetPayloadImpl(txType TransactionType) (Payload, error) {
+func (pb *PayloadBase) GetPayload(txType TransactionType) (Payload, error) {
 	var p Payload
 	switch txType {
 	case CoinBase:
