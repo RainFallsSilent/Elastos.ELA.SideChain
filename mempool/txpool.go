@@ -68,7 +68,12 @@ func (p *TxPool) appendToTxPool(tx *types.Transaction) error {
 		return err
 	}
 
-	tx.Fee = p.feeHelper.GetTxFee(tx, p.chainParams.ElaAssetId)
+	fee, err := p.feeHelper.GetTxFee(tx, p.chainParams.ElaAssetId)
+	if err != nil {
+		return err
+	}
+	tx.Fee = fee
+
 	buf := new(bytes.Buffer)
 	tx.Serialize(buf)
 	tx.FeePerKB = tx.Fee * 1000 / Fixed64(len(buf.Bytes()))
