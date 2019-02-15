@@ -50,7 +50,11 @@ func New(cfg *Config) *TxPool {
 //append transaction to txnpool when check ok.
 //1.check  2.check with ledger(db) 3.check with pool
 func (p *TxPool) AppendToTxPool(tx *types.Transaction) error {
+	log.Info("222 AppendToTxPool start")
+	defer log.Info("222 AppendToTxPool end")
+
 	p.Lock()
+	log.Info("222 AppendToTxPool Lock")
 	defer p.Unlock()
 	if err := p.appendToTxPool(tx); err != nil {
 		return err
@@ -94,7 +98,11 @@ func (p *TxPool) appendToTxPool(tx *types.Transaction) error {
 // HaveTransaction returns if a transaction is in transaction pool by the given
 // transaction id. If no transaction match the transaction id, return false
 func (p *TxPool) HaveTransaction(txId common.Uint256) bool {
+	log.Info("222 HaveTransaction start")
+	defer log.Info("222 HaveTransaction end")
+
 	p.RLock()
+	log.Info("222 HaveTransaction RLock")
 	defer p.RUnlock()
 	_, ok := p.txnList[txId]
 	return ok
@@ -103,7 +111,11 @@ func (p *TxPool) HaveTransaction(txId common.Uint256) bool {
 // GetTxsInPool returns a copy of the transactions in transaction pool,
 // It is safe to modify the returned map.
 func (p *TxPool) GetTxsInPool() map[common.Uint256]*types.Transaction {
+	log.Info("222 GetTxsInPool start")
+	defer log.Info("222 GetTxsInPool end")
+
 	p.RLock()
+	log.Info("222 GetTxsInPool RLock")
 	defer p.RUnlock()
 	copy := make(map[common.Uint256]*types.Transaction)
 	for txId, tx := range p.txnList {
@@ -114,8 +126,13 @@ func (p *TxPool) GetTxsInPool() map[common.Uint256]*types.Transaction {
 
 //clean the trasaction Pool with committed block.
 func (p *TxPool) CleanSubmittedTransactions(block *types.Block) error {
+	log.Info("222 CleanSubmittedTransactions start")
+	defer log.Info("222 CleanSubmittedTransactions end")
+
 	p.Lock()
+	log.Info("222 CleanSubmittedTransactions lock")
 	defer p.Unlock()
+
 	p.cleanTransactionList(block.Transactions)
 	p.cleanUTXOList(block.Transactions)
 	p.cleanMainchainTx(block.Transactions)
@@ -124,12 +141,13 @@ func (p *TxPool) CleanSubmittedTransactions(block *types.Block) error {
 
 //get the transaction by hash
 func (p *TxPool) GetTransaction(hash common.Uint256) *types.Transaction {
-	p.RLock()
-	defer p.RUnlock()
-	return p.getTransaction(hash)
-}
+	log.Info("222 GetTransaction start")
+	defer log.Info("222 GetTransaction end")
 
-func (p *TxPool) getTransaction(hash common.Uint256) *types.Transaction {
+	p.RLock()
+	log.Info("222 GetTransaction RLock")
+	defer p.RUnlock()
+
 	return p.txnList[hash]
 }
 
@@ -180,14 +198,14 @@ func (p *TxPool) verifyDoubleSpend(tx *types.Transaction) error {
 }
 
 func (p *TxPool) IsDuplicateMainchainTx(mainchainTxHash common.Uint256) bool {
+	log.Info("222 IsDuplicateMainchainTx start")
+	defer log.Info("222 IsDuplicateMainchainTx end")
+
 	p.RLock()
+	log.Info("222 IsDuplicateMainchainTx RLock")
 	defer p.RUnlock()
 	_, ok := p.mainchainTxList[mainchainTxHash]
-	if ok {
-		return true
-	}
-
-	return false
+	return ok
 }
 
 //check and add to mainchain tx pool
@@ -233,7 +251,7 @@ func (p *TxPool) cleanTransactionList(txns []*types.Transaction) error {
 	}
 
 	log.Debugf("[cleanTransactionList] %d cleaned,  Remains %d in TxPool",
-		cleaned, p.getTransactionCount())
+		cleaned, len(p.txnList))
 	return nil
 }
 
@@ -277,10 +295,6 @@ func (p *TxPool) copyTxList() map[common.Uint256]*types.Transaction {
 		txnMap[txnId] = txn
 	}
 	return txnMap
-}
-
-func (p *TxPool) getTransactionCount() int {
-	return len(p.txnList)
 }
 
 func (p *TxPool) getInputUTXOList(input *types.Input) *types.Transaction {
@@ -327,7 +341,11 @@ func (p *TxPool) delMainchainTx(hash common.Uint256) bool {
 }
 
 func (p *TxPool) MaybeAcceptTransaction(txn *types.Transaction) error {
+	log.Info("222 MaybeAcceptTransaction start")
+	defer log.Info("222 MaybeAcceptTransaction end")
+
 	p.Lock()
+	log.Info("222 MaybeAcceptTransaction Lock")
 	defer p.Unlock()
 	txHash := txn.Hash()
 
@@ -355,7 +373,11 @@ func (p *TxPool) MaybeAcceptTransaction(txn *types.Transaction) error {
 }
 
 func (p *TxPool) RemoveTransaction(txn *types.Transaction) {
+	log.Info("222 RemoveTransaction start")
+	defer log.Info("222 RemoveTransaction end")
+
 	p.Lock()
+	log.Info("222 RemoveTransaction Lock")
 	defer p.Unlock()
 	txHash := txn.Hash()
 	for i := range txn.Outputs {

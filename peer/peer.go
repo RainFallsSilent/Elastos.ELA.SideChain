@@ -460,11 +460,14 @@ out:
 	for {
 		select {
 		case msg := <-p.outputQueue:
+			log.Info("999 queueHandler outputQueue start ", p.ToPeer().String())
 			waiting = queuePacket(msg, pendingMsgs, waiting)
 
 			// This channel is notified when a message has been sent across
 			// the network socket.
+			log.Info("999 queueHandler outputQueue end", p.ToPeer().String())
 		case <-p.sendDoneQueue:
+			log.Info("999 queueHandler sendDoneQueue start", p.ToPeer().String())
 			// No longer waiting if there are no more messages
 			// in the pending messages queue.
 			next := pendingMsgs.Front()
@@ -477,25 +480,31 @@ out:
 			// asynchronously send.
 			val := pendingMsgs.Remove(next)
 			p.sendMessage(val.(outMsg))
-
+			log.Info("999 queueHandler sendDoneQueue end", p.ToPeer().String())
 		case iv := <-p.outputInvChan:
+			log.Info("999 queueHandler outputInvChan start", p.ToPeer().String())
 			// No handshake?  They'll find out soon enough.
 			if p.VersionKnown() {
+				log.Info("999 queueHandler outputInvChan start2", p.ToPeer().String())
 				// If this is a new block, then we'll blast it
 				// out immediately, sipping the inv trickle
 				// queue.
 				if iv.Type == msg.InvTypeBlock {
-
+					log.Info("999 queueHandler outputInvChan start3", p.ToPeer().String())
 					invMsg := msg.NewInvSize(1)
 					invMsg.AddInvVect(iv)
 					waiting = queuePacket(outMsg{msg: invMsg},
 						pendingMsgs, waiting)
+					log.Info("999 queueHandler outputInvChan start4", p.ToPeer().String())
 				} else {
+					log.Info("999 queueHandler outputInvChan start5", p.ToPeer().String())
 					invSendQueue.PushBack(iv)
+					log.Info("999 queueHandler outputInvChan start6", p.ToPeer().String())
 				}
 			}
-
+			log.Info("999 queueHandler outputInvChan end", p.ToPeer().String())
 		case <-trickleTicker.C:
+			log.Info("999 queueHandler trickleTicker start", p.ToPeer().String())
 			// Don't send anything if we're disconnecting or there
 			// is no queued inventory.
 			// version is known if send queue has any entries.
@@ -531,9 +540,11 @@ out:
 				waiting = queuePacket(outMsg{msg: invMsg},
 					pendingMsgs, waiting)
 			}
-
+			log.Info("999 queueHandler trickleTicker end", p.ToPeer().String())
 		case <-p.Quit():
+			log.Info("999 queueHandler Quit start", p.ToPeer().String())
 			break out
+			log.Info("999 queueHandler Quit end", p.ToPeer().String())
 		}
 	}
 
@@ -588,18 +599,25 @@ func (p *Peer) QueueMessage(msg p2p.Message, doneChan chan<- struct{}) {
 func (p *Peer) QueueInventory(invVect *msg.InvVect) {
 	// Don't add the inventory to the send queue if the peer is already
 	// known to have it.
+	log.Info("888 QueueInventory start", p.ToPeer().String())
+	defer log.Info("888 QueueInventory end", p.ToPeer().String())
 	if p.knownInventory.Exists(invVect) {
+		log.Info("888 QueueInventory end1", p.ToPeer().String())
 		return
 	}
+	log.Info("888 QueueInventory start1", p.ToPeer().String())
 
 	// Avoid risk of deadlock if goroutine already exited.  The goroutine
 	// we will be sending to hangs around until it knows for a fact that
 	// it is marked as disconnected and *then* it drains the channels.
 	if !p.Connected() {
+		log.Info("888 QueueInventory end2", p.ToPeer().String())
 		return
 	}
 
+	log.Info("888 QueueInventory start2", p.ToPeer().String())
 	p.outputInvChan <- invVect
+	log.Info("888 QueueInventory start3", p.ToPeer().String())
 }
 
 // start begins processing input and output messages.

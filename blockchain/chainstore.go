@@ -556,7 +556,10 @@ func (s *ChainStore) handleRollbackBlockTask(blockHash common.Uint256) error {
 		return fmt.Errorf("rollback block %s error %s", blockHash.String(), err)
 	}
 
+	log.Info("@@@ handleRollbackBlockTask start")
+	defer log.Info("@@@ handleRollbackBlockTask end")
 	s.mu.Lock()
+	log.Info("@@@ handleRollbackBlockTask ok")
 	s.currentBlockHeight = block.Header.Height - 1
 	s.mu.Unlock()
 
@@ -607,7 +610,12 @@ func (s *ChainStore) ContainsUnspent(txid common.Uint256, index uint16) (bool, e
 }
 
 func (s *ChainStore) GetHeight() uint32 {
+	log.Info("@@@ GetHeight start")
+	defer log.Info("@@@ GetHeight end")
+
 	s.mu.RLock()
+	log.Info("@@@ GetHeight ok")
+
 	defer s.mu.RUnlock()
 
 	return s.currentBlockHeight

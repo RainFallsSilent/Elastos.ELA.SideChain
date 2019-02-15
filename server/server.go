@@ -590,17 +590,25 @@ func (s *server) pushMerkleBlockMsg(sp *serverPeer, hash *common.Uint256,
 // handleRelayInvMsg deals with relaying inventory to peers that are not already
 // known to have it.  It is invoked from the peerHandler goroutine.
 func (s *server) handleRelayInvMsg(peers map[p2psvr.IPeer]*serverPeer, rmsg relayMsg) {
+	log.Info("444 handleRelayInvMsg start")
+	defer log.Info("444 handleRelayInvMsg end")
 	for _, sp := range peers {
+		log.Info("444 handleRelayInvMsg start 1", sp.ToPeer().String())
 		if !sp.Connected() {
+			log.Info("444 handleRelayInvMsg start 22", sp.ToPeer().String())
 			continue
 		}
+		log.Info("444 handleRelayInvMsg start 2", sp.ToPeer().String())
 
 		if rmsg.invVect.Type == msg.InvTypeTx {
 			// Don't relay the transaction to the peer when it has
 			// transaction relaying disabled.
+			log.Info("444 handleRelayInvMsg start 3", sp.ToPeer().String())
 			if sp.RelayTxDisabled() {
+				log.Info("444 handleRelayInvMsg start 44", sp.ToPeer().String())
 				continue
 			}
+			log.Info("444 handleRelayInvMsg start 4", sp.ToPeer().String())
 
 			tx, ok := rmsg.data.(*types.Transaction)
 			if !ok {
@@ -610,18 +618,23 @@ func (s *server) handleRelayInvMsg(peers map[p2psvr.IPeer]*serverPeer, rmsg rela
 				return
 			}
 
+			log.Info("444 handleRelayInvMsg start 5", sp.ToPeer().String())
 			// Don't relay the transaction if there is a bloom
 			// filter loaded and the transaction doesn't match it.
 			if sp.filter.IsLoaded() &&
 				!sp.filter.Match(tx) {
+				log.Info("444 handleRelayInvMsg start 66", sp.ToPeer().String())
 				continue
 			}
+			log.Info("444 handleRelayInvMsg start 6", sp.ToPeer().String())
 		}
 
 		// Queue the inventory to be relayed with the next batch.
 		// It will be ignored if the peer is already known to
 		// have the inventory.
+		log.Info("444 handleRelayInvMsg start 7", sp.ToPeer().String())
 		sp.QueueInventory(rmsg.invVect)
+		log.Info("444 handleRelayInvMsg start 8", sp.ToPeer().String())
 	}
 }
 
@@ -643,6 +656,7 @@ out:
 		select {
 		// New peers connected to the server.
 		case p := <-s.newPeers:
+			log.Info("333 peerHandler newPeer start")
 			sp := newServerPeer(s)
 			sp.Peer = peer.New(p, &peer.Listeners{
 				OnMemPool:      sp.OnMemPool,
@@ -661,9 +675,12 @@ out:
 
 			peers[p] = sp
 			s.syncManager.NewPeer(sp.Peer)
+			log.Info("333 peerHandler newPeer end")
 
 			// Disconnected peers.
 		case p := <-s.donePeers:
+			log.Info("333 peerHandler donePeer start")
+
 			sp, ok := peers[p]
 			if !ok {
 				log.Errorf("unknown done peer %v", p)
@@ -672,12 +689,16 @@ out:
 
 			delete(peers, p)
 			s.syncManager.DonePeer(sp.Peer)
+			log.Info("333 peerHandler donePeer end")
 
 			// New inventory to potentially be relayed to other peers.
 		case invMsg := <-s.relayInv:
+			log.Info("333 peerHandler relayInv start")
 			s.handleRelayInvMsg(peers, invMsg)
+			log.Info("333 peerHandler relayInv end")
 
 		case <-s.quit:
+			log.Info("333 peerHandler out")
 			break out
 		}
 	}

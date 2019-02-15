@@ -122,8 +122,13 @@ func New(cfg *Config) (*BlockChain, error) {
 }
 
 func (b *BlockChain) GetBestHeight() uint32 {
+	log.Info("### GetBestHeight start")
+	defer log.Info("### GetBestHeight end")
+
 	b.mutex.RLock()
+	log.Info("### GetBestHeight Rlock")
 	defer b.mutex.RUnlock()
+
 	return b.db.GetHeight()
 }
 
@@ -241,6 +246,7 @@ func (b *BlockChain) ProcessOrphans(hash *common.Uint256) error {
 			b.RemoveOrphanBlock(orphan)
 			i--
 
+			log.Info("### ProcessOrphans-> maybeAcceptBlock")
 			_, err := b.maybeAcceptBlock(orphan.Block)
 			if err != nil {
 				return err
@@ -653,6 +659,9 @@ func (b *BlockChain) getReorganizeNodes(node *BlockNode) (*list.List, *list.List
 // the end of the chain) and nodes the are being attached must be in forwards
 // order (think pushing them onto the end of the chain).
 func (b *BlockChain) reorganizeChain(detachNodes, attachNodes *list.List) error {
+	log.Info("### reorganizeChain start")
+	defer log.Info("### reorganizeChain end")
+
 	// Ensure all of the needed side chain blocks are in the cache.
 	for e := attachNodes.Front(); e != nil; e = e.Next() {
 		n := e.Value.(*BlockNode)
@@ -669,6 +678,7 @@ func (b *BlockChain) reorganizeChain(detachNodes, attachNodes *list.List) error 
 		if err != nil {
 			return err
 		}
+		log.Info("### reorganizeChain-> disconnectBlock")
 		err = b.disconnectBlock(n, block)
 		if err != nil {
 			return err
@@ -692,6 +702,9 @@ func (b *BlockChain) reorganizeChain(detachNodes, attachNodes *list.List) error 
 //// disconnectBlock handles disconnecting the passed node/block from the end of
 //// the main (best) chain.
 func (b *BlockChain) disconnectBlock(node *BlockNode, block *types.Block) error {
+	log.Info("### disconnectblock start")
+	defer log.Info("### disconnectblock end")
+
 	// Make sure the node being disconnected is the end of the best chain.
 	if b.BestChain == nil || !node.Hash.IsEqual(*b.BestChain.Hash) {
 		return fmt.Errorf("disconnectBlock must be called with the " +
@@ -720,7 +733,9 @@ func (b *BlockChain) disconnectBlock(node *BlockNode, block *types.Block) error 
 	// Notify the caller that the block was disconnected from the main
 	// chain.  The caller would typically want to react with actions such as
 	// updating wallets.
+	log.Info("### ETBlockDisconnected start")
 	events.Notify(events.ETBlockDisconnected, block)
+	log.Info("### ETBlockDisconnected end")
 
 	return nil
 }
@@ -728,6 +743,8 @@ func (b *BlockChain) disconnectBlock(node *BlockNode, block *types.Block) error 
 // connectBlock handles connecting the passed node/block to the end of the main
 // (best) chain.
 func (b *BlockChain) connectBlock(node *BlockNode, block *types.Block) error {
+	log.Info("### connectBlock start")
+	defer log.Info("### connectBlock end")
 
 	if err := b.CheckBlockContext(block); err != nil {
 		log.Errorf("CheckBlockContext error %s", err.Error())
@@ -747,6 +764,7 @@ func (b *BlockChain) connectBlock(node *BlockNode, block *types.Block) error {
 		return err
 	}
 
+	log.Info("### save block finished")
 	// Add the new node to the memory main chain indices for faster
 	// lookups.
 	node.InMainChain = true
@@ -761,7 +779,9 @@ func (b *BlockChain) connectBlock(node *BlockNode, block *types.Block) error {
 	// Notify the caller that the block was connected to the main chain.
 	// The caller would typically want to react with actions such as
 	// updating wallets.
+	log.Info("### ETBlockConnected start")
 	events.Notify(events.ETBlockConnected, block)
+	log.Info("### ETBlockConnected end")
 
 	return nil
 }
@@ -814,6 +834,9 @@ func (b *BlockChain) BlockExists(hash *common.Uint256) (bool, error) {
 }
 
 func (b *BlockChain) maybeAcceptBlock(block *types.Block) (bool, error) {
+	log.Info("### maybeAcceptBlock start")
+	defer log.Info("### maybeAcceptBlock end")
+
 	// Get a block node for the block previous to this one.  Will be nil
 	// if this is the genesis block.
 	prevNode, err := b.GetPrevNodeFromBlock(block)
@@ -869,7 +892,9 @@ func (b *BlockChain) maybeAcceptBlock(block *types.Block) (bool, error) {
 	// Notify the caller that the new block was accepted into the block
 	// chain.  The caller would typically want to react by relaying the
 	// inventory to other peers.
+	log.Info("### ETBlockAccepted start")
 	events.Notify(events.ETBlockAccepted, block)
+	log.Info("### ETBlockAccepted end")
 
 	return inMainChain, nil
 }
@@ -966,7 +991,10 @@ func (b *BlockChain) connectBestChain(node *BlockNode, block *types.Block) (bool
 //2. isOphan
 //3. error
 func (b *BlockChain) ProcessBlock(block *types.Block) (bool, bool, error) {
+	log.Info("### ProcessBlock start")
+	defer log.Info("### ProcessBlock end")
 	b.mutex.Lock()
+	log.Info("### ProcessBlock lock")
 	defer b.mutex.Unlock()
 
 	blockHash := block.Hash()
@@ -1015,6 +1043,7 @@ func (b *BlockChain) ProcessBlock(block *types.Block) (bool, bool, error) {
 
 	//The block has passed all context independent checks and appears sane
 	//enough to potentially accept it into the block chain.
+	log.Info("### ProcessBlock-> maybeAcceptBlock")
 	inMainChain, err := b.maybeAcceptBlock(block)
 	if err != nil {
 		return false, true, err
@@ -1023,6 +1052,7 @@ func (b *BlockChain) ProcessBlock(block *types.Block) (bool, bool, error) {
 	// Accept any orphan blocks that depend on this block (they are
 	// no longer orphans) and repeat for those accepted blocks until
 	// there are no more.
+	log.Info("### ProcessBlock-> ProcessOrphans")
 	err = b.ProcessOrphans(&blockHash)
 	if err != nil {
 		//TODO inMainChain or not
@@ -1034,6 +1064,7 @@ func (b *BlockChain) ProcessBlock(block *types.Block) (bool, bool, error) {
 		log.Info("current height -> ", block.Height)
 	}
 
+	log.Info("### ProcessBlock-> finished")
 	return inMainChain, false, nil
 }
 
@@ -1043,8 +1074,13 @@ func (b *BlockChain) DumpState() {
 }
 
 func (b *BlockChain) LatestBlockLocator() ([]*common.Uint256, error) {
+	log.Info("### LatestBlockLocator start")
+	defer log.Info("### LatestBlockLocator end")
+
 	b.mutex.RLock()
+	log.Info("### LatestBlockLocator rlock")
 	defer b.mutex.RUnlock()
+
 	if b.BestChain == nil {
 		// Get the latest block hash for the main chain from the
 		// database.
@@ -1079,7 +1115,12 @@ func (b *BlockChain) LookupNodeInIndex(hash *common.Uint256) (*BlockNode, bool) 
 }
 
 func (b *BlockChain) BlockLocatorFromHash(inhash *common.Uint256) []*common.Uint256 {
+	log.Info("### BlockLocatorFromHash start")
+	defer log.Info("### BlockLocatorFromHash end")
+
 	b.mutex.RLock()
+	log.Info("### BlockLocatorFromHash rlock")
+
 	defer b.mutex.RUnlock()
 	return b.blockLocatorFromHash(inhash)
 }
@@ -1242,7 +1283,12 @@ func (b *BlockChain) locateBlocks(startHash *common.Uint256, stopHash *common.Ui
 //
 // This function is safe for concurrent access.
 func (b *BlockChain) LocateBlocks(locator []*common.Uint256, hashStop *common.Uint256, maxHashes uint32) []*common.Uint256 {
+	log.Info("### BlockLocatorFromHash start")
+	defer log.Info("### BlockLocatorFromHash end")
+
 	b.mutex.RLock()
+	log.Info("### BlockLocatorFromHash RLock")
+
 	defer b.mutex.RUnlock()
 	startHash := b.locateStartBlock(locator)
 	blocks, err := b.locateBlocks(startHash, hashStop, maxHashes)

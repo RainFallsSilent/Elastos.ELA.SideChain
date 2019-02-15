@@ -666,40 +666,53 @@ func (sm *SyncManager) handleBlockchainEvents(event *events.Event) {
 	// A block has been accepted into the block chain.  Relay it to other
 	// peers.
 	case events.ETBlockAccepted:
+		log.Info("111 ETBlockAccepted start")
 		// Don't relay if we are not current. Other peers that are
 		// current should already know about it.
 		if !sm.current() {
+			log.Info("111 ETBlockAccepted end1")
 			return
 		}
+
+		log.Info("111 ETBlockAccepted start 2")
 
 		block, ok := event.Data.(*types.Block)
 		if !ok {
 			log.Warnf("Chain accepted event is not a block.")
+			log.Info("111 ETBlockAccepted end2")
 			break
 		}
 
 		// Generate the inventory vector and relay it.
 		blockHash := block.Hash()
 		iv := msg.NewInvVect(msg.InvTypeBlock, &blockHash)
+
+		log.Info("111 ETBlockAccepted start 3")
 		sm.peerNotifier.RelayInventory(iv, block.Header)
+		log.Info("111 ETBlockAccepted end3")
 
 		// A block has been connected to the main block chain.
 	case events.ETBlockConnected:
+		log.Info("111 ETBlockConnected start")
 		block, ok := event.Data.(*types.Block)
 		if !ok {
 			log.Warnf("Chain connected event is not a block.")
+			log.Info("111 ETBlockConnected end1")
 			break
 		}
 
 		// Remove all of the transactions (except the coinbase) in the
 		// connected block from the transaction pool.
 		sm.txMemPool.CleanSubmittedTransactions(block)
+		log.Info("111 ETBlockConnected end2")
 
 		// A block has been disconnected from the main block chain.
 	case events.ETBlockDisconnected:
+		log.Info("111 ETBlockDisconnected start")
 		block, ok := event.Data.(*types.Block)
 		if !ok {
 			log.Warnf("Chain disconnected event is not a block.")
+			log.Info("111 ETBlockDisconnected end1")
 			break
 		}
 
@@ -714,6 +727,7 @@ func (sm *SyncManager) handleBlockchainEvents(event *events.Event) {
 				sm.txMemPool.RemoveTransaction(tx)
 			}
 		}
+		log.Info("111 ETBlockDisconnected end2")
 	}
 }
 
