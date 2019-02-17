@@ -633,7 +633,7 @@ func (s *server) handleRelayInvMsg(peers map[p2psvr.IPeer]*serverPeer, rmsg rela
 		// It will be ignored if the peer is already known to
 		// have the inventory.
 		log.Info("444 handleRelayInvMsg start 7", sp.ToPeer().String())
-		sp.QueueInventory(rmsg.invVect)
+		go sp.QueueInventory(rmsg.invVect)
 		log.Info("444 handleRelayInvMsg start 8", sp.ToPeer().String())
 	}
 }
@@ -656,7 +656,7 @@ out:
 		select {
 		// New peers connected to the server.
 		case p := <-s.newPeers:
-			log.Info("333 peerHandler newPeer start")
+			log.Info("333 peerHandler newPeer start", p.ToPeer().String())
 			sp := newServerPeer(s)
 			sp.Peer = peer.New(p, &peer.Listeners{
 				OnMemPool:      sp.OnMemPool,
@@ -675,11 +675,11 @@ out:
 
 			peers[p] = sp
 			s.syncManager.NewPeer(sp.Peer)
-			log.Info("333 peerHandler newPeer end")
+			log.Info("333 peerHandler newPeer end", p.ToPeer().String())
 
 			// Disconnected peers.
 		case p := <-s.donePeers:
-			log.Info("333 peerHandler donePeer start")
+			log.Info("333 peerHandler donePeer start ", p.ToPeer().String())
 
 			sp, ok := peers[p]
 			if !ok {
@@ -689,7 +689,7 @@ out:
 
 			delete(peers, p)
 			s.syncManager.DonePeer(sp.Peer)
-			log.Info("333 peerHandler donePeer end")
+			log.Info("333 peerHandler donePeer end", p.ToPeer().String())
 
 			// New inventory to potentially be relayed to other peers.
 		case invMsg := <-s.relayInv:

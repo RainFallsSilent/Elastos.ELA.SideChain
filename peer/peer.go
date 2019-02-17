@@ -423,8 +423,8 @@ cleanup:
 }
 
 func (p *Peer) sendMessage(msg outMsg) {
-	p.SendMessage(msg.msg, msg.doneChan)
 	p.stallControl <- stallControlMsg{sccSendMessage, msg.msg}
+	p.SendMessage(msg.msg, msg.doneChan)
 }
 
 // queueHandler handles the queuing of outgoing data for the peer. This runs as
@@ -473,6 +473,7 @@ out:
 			next := pendingMsgs.Front()
 			if next == nil {
 				waiting = false
+				log.Info("999 queueHandler sendDoneQueue end2", p.ToPeer().String())
 				continue
 			}
 
@@ -509,6 +510,7 @@ out:
 			// is no queued inventory.
 			// version is known if send queue has any entries.
 			if !p.Connected() || invSendQueue.Len() == 0 {
+				log.Info("999 queueHandler trickleTicker end2", p.ToPeer().String())
 				continue
 			}
 
@@ -521,6 +523,7 @@ out:
 				// Don't send inventory that became known after
 				// the initial check.
 				if p.knownInventory.Exists(iv) {
+					log.Info("999 queueHandler trickleTicker end3", p.ToPeer().String())
 					continue
 				}
 
