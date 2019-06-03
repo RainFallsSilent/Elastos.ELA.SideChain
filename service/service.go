@@ -80,17 +80,23 @@ func (s *HttpService) GetRawTransaction(param http.Params) (interface{}, error) 
 	if err != nil {
 		return nil, newError(InvalidParams)
 	}
+	var header *types.Header
 	tx, height, err := s.cfg.Chain.GetTransaction(hash)
 	if err != nil {
-		return nil, newError(UnknownTransaction)
-	}
-	bHash, err := s.cfg.Chain.GetBlockHash(height)
-	if err != nil {
-		return nil, newError(UnknownTransaction)
-	}
-	header, err := s.cfg.Chain.GetHeader(bHash)
-	if err != nil {
-		return nil, newError(UnknownTransaction)
+		//try to find transaction in transaction pool.
+		tx = s.cfg.TxMemPool.GetTransaction(hash)
+		if tx == nil {
+			return nil, newError(UnknownTransaction)
+		}
+	} else {
+		bHash, err := s.cfg.Chain.GetBlockHash(height)
+		if err != nil {
+			return nil, newError(UnknownTransaction)
+		}
+		header, err = s.cfg.Chain.GetHeader(bHash)
+		if err != nil {
+			return nil, newError(UnknownTransaction)
+		}
 	}
 
 	verbose, ok := param.Bool("verbose")
