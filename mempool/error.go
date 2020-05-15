@@ -50,7 +50,7 @@ var errorCodeStrings = map[ErrorCode]string{
 	ErrTransactionSize:      "ErrTransactionSize",
 }
 
-// String returns the ErrorCode as a human-readable name.
+// String returns the ErrorCode as a human-readable Name.
 func (e ErrorCode) String() string {
 	if s := errorCodeStrings[e]; s != "" {
 		return s

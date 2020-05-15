@@ -122,14 +122,14 @@ func TestCheckMultiSigSignature(t *testing.T) {
 	fakeCode[0] = fakeCode[0] - fakeCode[0] + crypto.PUSH1 - 1
 	tx.Programs = []*types.Program{{Code: fakeCode, Parameter: signature}}
 	err = RunPrograms(tx, []common.Uint168{*act.programHash}, tx.Programs)
-	assert.EqualError(t, err, "data hash is different from corresponding program code", "invalid multi sign script code")
+	assert.EqualError(t, err, "data Hash is different from corresponding program code", "invalid multi sign script code")
 
 	// invalid redeem script M > N
 	copy(fakeCode, act.redeemScript)
 	fakeCode[0] = fakeCode[len(fakeCode)-2] - crypto.PUSH1 + 2
 	tx.Programs = []*types.Program{{Code: fakeCode, Parameter: signature}}
 	err = RunPrograms(tx, []common.Uint168{*act.programHash}, tx.Programs)
-	assert.EqualError(t, err, "data hash is different from corresponding program code", "invalid multi sign script code")
+	assert.EqualError(t, err, "data Hash is different from corresponding program code", "invalid multi sign script code")
 
 	// invalid redeem script length not enough
 	copy(fakeCode, act.redeemScript)
@@ -138,7 +138,7 @@ func TestCheckMultiSigSignature(t *testing.T) {
 	}
 	tx.Programs = []*types.Program{{Code: fakeCode, Parameter: signature}}
 	err = RunPrograms(tx, []common.Uint168{*act.programHash}, tx.Programs)
-	assert.EqualError(t, err, "data hash is different from corresponding program code", "not a valid multi sign transaction code, length not enough")
+	assert.EqualError(t, err, "data Hash is different from corresponding program code", "not a valid multi sign transaction code, length not enough")
 
 	// invalid redeem script N not equal to public keys count
 	fakeCode = make([]byte, len(act.redeemScript))
@@ -146,7 +146,7 @@ func TestCheckMultiSigSignature(t *testing.T) {
 	fakeCode[len(fakeCode)-2] = fakeCode[len(fakeCode)-2] + 1
 	tx.Programs = []*types.Program{{Code: fakeCode, Parameter: signature}}
 	err = RunPrograms(tx, []common.Uint168{*act.programHash}, tx.Programs)
-	assert.EqualError(t, err, "data hash is different from corresponding program code", "invalid multi sign public key script count")
+	assert.EqualError(t, err, "data Hash is different from corresponding program code", "invalid multi sign public key script count")
 
 	// invalid redeem script wrong public key
 	fakeCode = make([]byte, len(act.redeemScript))
@@ -154,12 +154,12 @@ func TestCheckMultiSigSignature(t *testing.T) {
 	fakeCode[2] = 0x01
 	tx.Programs = []*types.Program{{Code: fakeCode, Parameter: signature}}
 	err = RunPrograms(tx, []common.Uint168{*act.programHash}, tx.Programs)
-	assert.EqualError(t, err, "data hash is different from corresponding program code", "The encodeData format is error")
+	assert.EqualError(t, err, "data Hash is different from corresponding program code", "The encodeData format is error")
 
 	// invalid signature length not match
 	tx.Programs = []*types.Program{{Code: fakeCode, Parameter: signature[math.Intn(64):]}}
 	err = RunPrograms(tx, []common.Uint168{*act.programHash}, tx.Programs)
-	assert.EqualError(t, err, "data hash is different from corresponding program code", "invalid multi sign signatures, length not match")
+	assert.EqualError(t, err, "data Hash is different from corresponding program code", "invalid multi sign signatures, length not match")
 
 	// invalid signature not enough
 	cut := len(signature)/crypto.SignatureScriptLength - int(act.redeemScript[0]-crypto.PUSH1)
@@ -266,14 +266,14 @@ func TestRunPrograms(t *testing.T) {
 		rand.Read(hashes[math.Intn(num)][:])
 	}
 	err = RunPrograms(tx, hashes, programs)
-	assert.Equal(t, "data hash is different from corresponding program code", err.Error())
+	assert.Equal(t, "data Hash is different from corresponding program code", err.Error())
 
 	// With disordered hashes
 	init()
 	common.SortProgramHashByCodeHash(hashes)
 	sort.Sort(sort.Reverse(byHash(programs)))
 	err = RunPrograms(tx, hashes, programs)
-	assert.EqualError(t, err, "data hash is different from corresponding program code")
+	assert.EqualError(t, err, "data Hash is different from corresponding program code")
 
 	// With random no code
 	init()
@@ -281,7 +281,7 @@ func TestRunPrograms(t *testing.T) {
 		programs[math.Intn(num)].Code = nil
 	}
 	err = RunPrograms(tx, hashes, programs)
-	assert.EqualError(t, err, "data hash is different from corresponding program code")
+	assert.EqualError(t, err, "data Hash is different from corresponding program code")
 
 	// With random no parameter
 	init()

@@ -470,7 +470,7 @@ func (v *Validator) checkRechargeToSideChainTransaction(txn *types.Transaction) 
 
 	mainchainTxhash := mainChainTransaction.Hash()
 	if v.db.IsDuplicateMainchainTx(mainchainTxhash) {
-		str := fmt.Sprint("[checkRechargeToSideChainTransaction] Duplicate mainchain transaction hash in paylod")
+		str := fmt.Sprint("[checkRechargeToSideChainTransaction] Duplicate mainchain transaction Hash in paylod")
 		return ruleError(ErrRechargeToSideChain, str)
 	}
 
@@ -483,7 +483,7 @@ func (v *Validator) checkRechargeToSideChainTransaction(txn *types.Transaction) 
 	genesisHash, _ := v.db.GetBlockHash(uint32(0))
 	genesisProgramHash, err := GenesisToProgramHash(&genesisHash)
 	if err != nil {
-		str := fmt.Sprint("[checkRechargeToSideChainTransaction] Genesis block bytes to program hash failed")
+		str := fmt.Sprint("[checkRechargeToSideChainTransaction] Genesis block bytes to program Hash failed")
 		return ruleError(ErrRechargeToSideChain, str)
 	}
 
@@ -596,7 +596,7 @@ func (v *Validator) checkTransferCrossChainAssetTransaction(txn *types.Transacti
 	//check cross chain amount in payload
 	for i := 0; i < len(payloadObj.OutputIndexes); i++ {
 		if !txn.Outputs[payloadObj.OutputIndexes[i]].ProgramHash.IsEqual(common.Uint168{}) {
-			str := fmt.Sprint("[checkTransferCrossChainAssetTransaction] Invalid transaction output program hash")
+			str := fmt.Sprint("[checkTransferCrossChainAssetTransaction] Invalid transaction output program Hash")
 			return ruleError(ErrCrossChain, str)
 		}
 		if txn.Outputs[payloadObj.OutputIndexes[i]].Value < 0 || payloadObj.CrossChainAmounts[i] < 0 ||
@@ -688,7 +688,7 @@ func RunPrograms(tx *types.Transaction, hashes []common.Uint168, programs []*typ
 		codeHash := common.ToCodeHash(programs[i].Code)
 
 		if !hashes[i].ToCodeHash().IsEqual(*codeHash) {
-			return errors.New("data hash is different from corresponding program code")
+			return errors.New("data Hash is different from corresponding program code")
 		}
 		//execute program on VM
 		se := vm.NewExecutionEngine(types.GetDataContainer(&hashes[i], tx),

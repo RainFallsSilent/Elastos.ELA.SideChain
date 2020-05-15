@@ -6,9 +6,9 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/elastos/Elastos.ELA.SideChain/interfaces"
 	"github.com/elastos/Elastos.ELA.SideChain/spv"
 	"github.com/elastos/Elastos.ELA.SideChain/types"
-	"github.com/elastos/Elastos.ELA.SideChain/interfaces"
 
 	"github.com/elastos/Elastos.ELA/common"
 	"github.com/elastos/Elastos.ELA/crypto"
@@ -117,8 +117,8 @@ func (v *Validator) checkHeader(params ...interface{}) (err error) {
 	if !header.GetAuxPow().SideAuxPowCheck(header.Hash()) {
 		return errors.New("[powCheckHeader] block check proof is failed")
 	}
-	if v.checkProofOfWork(header, powLimit) != nil {
-		return errors.New("[powCheckHeader] block check proof is failed.")
+	if er := v.checkProofOfWork(header, powLimit); er != nil {
+		return errors.New("[powCheckHeader] block check proof is failed." + er.Error())
 	}
 
 	// A block timestamp must not have a greater precision than one second.
@@ -208,7 +208,7 @@ func (v *Validator) checkTransactionsMerkle(params ...interface{}) (err error) {
 
 		// Check for transaction sanity
 		if err := v.chain.cfg.CheckTxSanity(txn); err != nil {
-			return errors.New("[CheckTransactionsMerkle] failed when verifiy block")
+			return errors.New("[CheckTransactionsMerkle] failed when verifiy block, err:" + err.Error())
 		}
 
 		// Check for duplicate UTXO inputs in a block
@@ -250,11 +250,13 @@ func (v *Validator) checkTransactionsMerkle(params ...interface{}) (err error) {
 func (v *Validator) checkProofOfWork(header interfaces.Header, powLimit *big.Int) (err error) {
 	// The target difficulty must be larger than zero.
 	target := CompactToBig(header.GetBits())
+	log.Info("target.Sign():", target.Sign())
 	if target.Sign() <= 0 {
 		return errors.New("[checkProofOfWork], block target difficulty is too low.")
 	}
 
 	// The target difficulty must be less than the maximum allowed.
+	log.Info("powLimit", powLimit)
 	if target.Cmp(powLimit) > 0 {
 		return errors.New("[checkProofOfWork], block target difficulty is higher than max of limit.")
 	}
